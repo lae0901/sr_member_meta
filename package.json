@@ -1,0 +1,39 @@
+{
+  "name": "sr_member_meta",
+  "version": "1.0.0",
+  "description": "ibmi srcmbr meta info",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "node ./lib/tests/tests.js",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "files": [
+    "/lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lae0901/sr_member_meta.git"
+  },
+  "keywords": [],
+  "author": "Stephen Richter",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/lae0901/sr_member_meta/issues"
+  },
+  "homepage": "https://github.com/lae0901/sr_member_meta#readme",
+  "devDependencies": {
+    "@types/node": "^13.13.21",
+    "prettier": "^1.19.1",
+    "sr_test_framework": "^1.0.7",
+    "tslint": "^6.1.3",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "sr_core_ts": "^1.46.34"
+  }
+}
