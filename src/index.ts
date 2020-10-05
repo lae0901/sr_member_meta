@@ -154,7 +154,7 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
     const parts = path.parse(srcmbr_filePath);
     dirPath = parts.dir;
     const extPart = parts.ext ? '-' + parts.ext.substr(1) : '';
-    metaDirPath = path.join(dirPath, '.meta');
+    metaDirPath = path.join(dirPath, '.mirror');
     metaName = parts.name + extPart + '.json';
   }
 
