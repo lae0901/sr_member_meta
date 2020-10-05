@@ -9,8 +9,11 @@ export type LangCode = 'dds' | 'rpg' | 'other';
 export interface iOriginal_srcmbr_content 
 {
   srcmbr_fileName: string,
+  
+  // likely removing these two properties. Better stored in iMemberMetaItem.
   langCode: LangCode;
   compile_time_array_start: number;
+
   original_lines_text: string;
 }
 
@@ -36,6 +39,14 @@ export interface iMemberMetaItem
   chgDate: string,
   chgTime: string;
   mtime: number;
+
+  // langCode is derived from srcType. See langCode_setup function.
+  langCode: LangCode;
+
+  // line num where compile time arrays start in rpg srcmbr.
+  // Use this when deciding whether to shift source code to the left by 5 
+  // characters.
+  compile_time_array_start: number;
 }
 
 // ------------------------------- folderContent_new -------------------------------
@@ -49,9 +60,24 @@ export function folderContent_new(
     srcmbr_fileName,
     dirPath,
     chgDate: dspfd.CHGDATE, chgTime: dspfd.CHGTIME,
-    mtime: dspfd.mtime
+    mtime: dspfd.mtime,
+    langCode: langCode_setup(dspfd.SRCTYPE),
+    compile_time_array_start: -1
   };
   return content;
+}
+
+// -------------------------------- langCode_setup --------------------------------
+export function langCode_setup(srcType: string): LangCode
+{
+  // language code.  is rpg, dds or other.
+  let langCode: LangCode = 'other';
+  if ((srcType == 'SQLRPGLE') || (srcType == 'RPGLE'))
+    langCode = 'rpg';
+  else if ((srcType == 'DSPF') || (srcType == 'PF')
+    || (srcType == 'LF') || (srcType == 'PRTF'))
+    langCode = 'dds';
+  return langCode;
 }
 
 // ---------------------------- memberMeta_ensureFolder ----------------------------
@@ -64,6 +90,19 @@ export async function memberMeta_ensureFolder(dirPath: string,
   {
     appendActivityLog(`error ${errmsg} creating srcf mirror meta folder ${metaDirPath}`);
   }
+}
+
+// ---------------------------- memberMeta_isSrcmbrFile ----------------------------
+// check if file contains srcmbr mirrored down to PC from ibm i.
+// Not intended to be definitive test. Just looking to rule out directories or 
+// .json files.
+export function memberMeta_isSrcmbrFile( srcmbr_fileName:string ) : boolean
+{
+  const ext = path.extname(srcmbr_fileName);
+  if (( !ext ) || ( ext == '.json'))
+    return false ;
+  else
+    return true ;
 }
 
 // ------------------------------- memberMeta_unlink -------------------------------
@@ -106,10 +145,13 @@ export async function memberMeta_readFolder(dirPath: string)
   const { files } = await dir_readdir(dirPath);
   for (const fileName of files)
   {
-    const memberMeta = await memberMeta_readFile(dirPath, fileName);
-    if (memberMeta)
+    if ( memberMeta_isSrcmbrFile(fileName))
     {
-      memberMetaArr.push(memberMeta);
+      const memberMeta = await memberMeta_readFile(dirPath, fileName);
+      if (memberMeta)
+      {
+        memberMetaArr.push(memberMeta);
+      }
     }
   }
   return memberMetaArr;
@@ -118,7 +160,8 @@ export async function memberMeta_readFolder(dirPath: string)
 
 // ------------------------------- memberMeta_write -------------------------------
 export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
-  data: {dspfd?: iDspfd_mbrlist, content?: iMemberMetaItem})
+  data: {dspfd?: iDspfd_mbrlist, content?: iMemberMetaItem, 
+          compile_time_array_start?:number })
 {
   let content: iMemberMetaItem | undefined;
   if (data.content)
@@ -131,6 +174,16 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
   }
   if (content)
   {
+    content.langCode = langCode_setup( content.srcType );
+
+    // store line num where compile time arrays start in rpg srcmbr.
+    // Use this when deciding whether to shift source code to the left by 5 
+    // characters.
+    if ( typeof data.compile_time_array_start != 'undefined' )
+    {
+      content.compile_time_array_start = data.compile_time_array_start;
+    }
+
     const metaPath = memberMeta_filePath(undefined, dirPath, content.srcmbr_fileName);
     const metaText = JSON.stringify(content);
     await file_writeNew(metaPath, metaText);
