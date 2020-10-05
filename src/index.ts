@@ -9,11 +9,6 @@ export type LangCode = 'dds' | 'rpg' | 'other';
 export interface iOriginal_srcmbr_content 
 {
   srcmbr_fileName: string,
-  
-  // likely removing these two properties. Better stored in iMemberMetaItem.
-  langCode?: LangCode;
-  compile_time_array_start?: number;
-
   original_lines_text: string;
 }
 
