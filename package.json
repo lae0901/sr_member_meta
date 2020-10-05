@@ -1,6 +1,6 @@
 {
   "name": "sr_member_meta",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "ibmi srcmbr meta info",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

@@ -11,8 +11,8 @@ export interface iOriginal_srcmbr_content
   srcmbr_fileName: string,
   
   // likely removing these two properties. Better stored in iMemberMetaItem.
-  langCode: LangCode;
-  compile_time_array_start: number;
+  langCode?: LangCode;
+  compile_time_array_start?: number;
 
   original_lines_text: string;
 }
@@ -188,6 +188,8 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
     const metaText = JSON.stringify(content);
     await file_writeNew(metaPath, metaText);
   }
+  
+  return content!;
 }
 
 // ------------------------------ memberMeta_filePath ------------------------------
@@ -214,4 +216,36 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
   metaPath = path.join(metaDirPath, metaName);
 
   return metaPath;
+}
+
+// ------------------------------- memberOriginal_write -------------------------------
+export async function memberOriginal_write(dirPath: string, srcmbr_fileName: string,
+                                            original_lines_text: string)
+{
+  const original: iOriginal_srcmbr_content = {srcmbr_fileName, original_lines_text} ;
+  const origPath = memberOriginal_filePath(dirPath, srcmbr_fileName);
+  const origText = JSON.stringify(original);
+  await file_writeNew(origPath, origText);
+}
+
+// ------------------------------ memberOriginal_filePath ------------------------------
+function memberOriginal_filePath(dirPath: string, srcmbr_fileName: string)
+{
+
+  let origPath = '';
+  let metaDirPath = '';
+  let origName = '';
+
+  const original_filePath = path.join(dirPath, srcmbr_fileName);
+
+  {
+    const parts = path.parse(original_filePath);
+    const extPart = parts.ext ? '-' + parts.ext.substr(1) : '';
+    metaDirPath = path.join(dirPath, '.meta');
+    origName = parts.name + extPart + '-orig' + '.json';
+  }
+
+  origPath = path.join(metaDirPath, origName);
+
+  return origPath;
 }
