@@ -128,7 +128,14 @@ export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: stri
   const { text: metaText } = await file_readText(metaPath);
   if (metaText)
   {
-    memberMeta = JSON.parse(metaText);
+    try
+    {
+      memberMeta = JSON.parse(metaText);
+    }
+    catch(e)
+    {
+      memberMeta = undefined;
+    }
   }
   return memberMeta;
 }
