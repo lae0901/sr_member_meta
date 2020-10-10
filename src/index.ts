@@ -221,6 +221,8 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
 }
 
 // ------------------------------- memberOriginal_write -------------------------------
+// member original is file in .mirror folder that stores original text lines of the
+// srcmbr file. 
 export async function memberOriginal_write(dirPath: string, srcmbr_fileName: string,
                                             original_lines_text: string)
 {
@@ -231,6 +233,8 @@ export async function memberOriginal_write(dirPath: string, srcmbr_fileName: str
 }
 
 // ------------------------------ memberOriginal_filePath ------------------------------
+// member original is file in .mirror folder that stores original text lines of the
+// srcmbr file. 
 function memberOriginal_filePath(dirPath: string, srcmbr_fileName: string)
 {
 
