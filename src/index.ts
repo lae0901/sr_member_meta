@@ -77,11 +77,11 @@ export function langCode_setup(srcType: string): LangCode
 
 // ---------------------------- memberMeta_ensureFolder ----------------------------
 export async function memberMeta_ensureFolder(dirPath: string,
-                          appendActivityLog: (text: string) => void)
+                          appendActivityLog?: (text: string) => void)
 {
   const metaDirPath = path.join(dirPath, '.mirror');
   const { errmsg } = await dir_ensureExists(metaDirPath);
-  if (errmsg)
+  if (errmsg && appendActivityLog)
   {
     appendActivityLog(`error ${errmsg} creating srcf mirror meta folder ${metaDirPath}`);
   }
@@ -186,6 +186,7 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
       content.compile_time_array_start = data.compile_time_array_start;
     }
 
+    await memberMeta_ensureFolder(dirPath) ;
     const metaPath = memberMeta_filePath(undefined, dirPath, content.srcmbr_fileName);
     const metaText = JSON.stringify(content);
     await file_writeNew(metaPath, metaText);
