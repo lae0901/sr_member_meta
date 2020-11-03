@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { dir_ensureExists, dir_readdir, file_readText, file_unlink, file_writeNew } from 'sr_core_ts';
+import { dir_ensureExists, dir_readdir, file_readText, file_unlink, file_writeNew, string_head } from 'sr_core_ts';
 import { iDspfd_mbrlist } from 'sr_ibmi_common';
 
 // -------------------------------- LangCode ------------------------------------
@@ -255,4 +255,19 @@ function memberOriginal_filePath(dirPath: string, srcmbr_fileName: string)
   origPath = path.join(metaDirPath, origName);
 
   return origPath;
+}
+
+// --------------------------------- srcType_toExt ---------------------------------
+export function srcType_toExt( srcType:string ) : string
+{
+  // extension of this source file.
+  let ext = '.' + srcType.toLowerCase();
+  const upper_srcType = srcType.toUpperCase() ;
+  if (string_head(upper_srcType, 3) == 'SQL' && (upper_srcType != 'SQLRPGLE'))
+    ext = '.sqli';
+  else if (upper_srcType == 'CMD')
+    ext = '.cmdi';
+  else if ( upper_srcType == 'RPG')
+    ext = '.rpgi' ;
+  return ext ;
 }
