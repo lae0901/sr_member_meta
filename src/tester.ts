@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { testResults_append, testResults_consoleLog, testResults_new } from 'sr_test_framework';
-import { langCode_setup, srcType_toExt } from '.';
+import { langCode_setup, memberMeta_readFolder, srcType_toExt } from '.';
 
 // run main function that is declared as async. 
 async_main();

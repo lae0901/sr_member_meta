@@ -88,9 +88,12 @@ export async function memberMeta_ensureFolder(dirPath: string,
 }
 
 // ---------------------------- memberMeta_isSrcmbrFile ----------------------------
-// check if file contains srcmbr mirrored down to PC from ibm i.
-// Not intended to be definitive test. Just looking to rule out directories or 
-// .json files.
+/** check if file name could be name of srcmbr file mirrored down from ibm i.
+ *  was created from srcmbr mirrored down to PC from ibm i.
+ * If file name is not .json file or not directory, then is considered to be
+ * a srcmbr file name.
+ * @param srcmbr_fileName name of file to check if could be srcmbr file
+*/
 export function memberMeta_isSrcmbrFile( srcmbr_fileName:string ) : boolean
 {
   const ext = path.extname(srcmbr_fileName);
@@ -121,6 +124,7 @@ export async function memberMeta_readContent(filePath?: string, dirPath?: string
 }
 
 // ------------------------------ memberMeta_readFile ------------------------------
+/** read the contents of memberMeta file of this srcmbr_fileName  */
 export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: string)
 {
   let memberMeta: iMemberMetaItem | undefined;
@@ -141,24 +145,27 @@ export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: stri
 }
 
 // ----------------------------- memberMeta_readFolder -----------------------------
+/** Gather memberMeta info on each file in dirPath.
+ * returns an array contain name of each file in the @param dirPath and the 
+ * memberMeta info of that file. ( which can be undefined in case where a file
+ * exists in @param dirPath but there is no memberMeta info on that file. )
+ * @param dirPath directory path of `folder` to gather meta info from.
+*/
 export async function memberMeta_readFolder(dirPath: string)
 {
-  const memberMetaArr: iMemberMetaItem[] = [];
+  const memberMetaArr: { fileName:string, memberMeta?: iMemberMetaItem }[] = [];
   const { files } = await dir_readdir(dirPath);
   for (const fileName of files)
   {
     if ( memberMeta_isSrcmbrFile(fileName))
     {
-      const memberMeta = await memberMeta_readFile(dirPath, fileName);
-      if (memberMeta)
-      {
-        memberMetaArr.push(memberMeta);
-      }
+      const item: { fileName: string, memberMeta?: iMemberMetaItem } = {fileName} ;
+      item.memberMeta = await memberMeta_readFile(dirPath, fileName);
+      memberMetaArr.push( item );
     }
   }
   return memberMetaArr;
 }
-
 
 // ------------------------------- memberMeta_write -------------------------------
 export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
