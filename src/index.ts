@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { dir_ensureExists, dir_readdir, file_readText, file_unlink, file_writeNew, string_head } from 'sr_core_ts';
+import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, string_head } from 'sr_core_ts';
 import { iDspfd_mbrlist } from 'sr_ibmi_common';
 
 // -------------------------------- LangCode ------------------------------------
@@ -255,6 +255,27 @@ function memberOriginal_filePath(dirPath: string, srcmbr_fileName: string)
   origPath = path.join(metaDirPath, origName);
 
   return origPath;
+}
+
+// ------------------------------- srcmbr_filePath_rename -------------------------------
+// rename the file that stores srcmbr in the PC mirror folder.
+// When file is renamed, the memberMeta file has to be renamed also.
+export async function srcmbr_filePath_rename( 
+        srcmbr_filePath:string, toFileName:string )
+{
+  let errmsg = '' ;
+  let toPath = '' ;
+
+  // rename the srcmbr file.
+  ({toPath, errmsg} = await file_rename(srcmbr_filePath, {baseName:toFileName}));
+
+  // rename the associated memberMeta file.
+  {
+    const metaPath = memberMeta_filePath( srcmbr_filePath ) ;
+    const { toPath:toMetaPath, errmsg: metaErrmsg } = await file_rename( metaPath, { baseName: toFileName });
+  }
+
+  return {toPath, errmsg } ;
 }
 
 // --------------------------------- srcType_toExt ---------------------------------

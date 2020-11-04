@@ -18,6 +18,9 @@
 * iIfsItem[] = await ibmi_ifs_getItems( dirPath, itemName, filter_itemType )
 * {buf,errmsg} = await ibmi_ifs_getFileContents( filePath )
 
+## meta functions
+{toPath, errmsg } = await srcmbr_filePath_rename( srcmbr_filePath, toFileName ) ;
+
 ## interfaces
 ```
 // -------------------------- iServerOptions -------------------------
