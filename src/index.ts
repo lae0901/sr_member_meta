@@ -41,6 +41,9 @@ export interface iMemberMetaItem
   // Use this when deciding whether to shift source code to the left by 5 
   // characters.
   compile_time_array_start: number;
+
+  // name of meta file where this member meta info is stored.
+  metaFileName?: string;
 }
 
 // ------------------------------- folderContent_new -------------------------------
@@ -72,6 +75,19 @@ export function langCode_setup(srcType: string): LangCode
     || (srcType == 'LF') || (srcType == 'PRTF'))
     langCode = 'dds';
   return langCode;
+}
+
+// ------------------------------ memberMeta_dirPath ------------------------------
+/**
+ * compose the dirPath of directory where member meta files are stored. ( each srcmbr
+ * mirror folder contains a .mirror directory. This function returns the path name of
+ * that .mirror directory. )
+ * @param dirPath path of srcmbr mirror folder.
+ */
+function memberMeta_dirPath(dirPath: string)
+{
+  const metaDirPath = path.join(dirPath, '.mirror');
+  return metaDirPath;
 }
 
 // ---------------------------- memberMeta_ensureFolder ----------------------------
@@ -140,7 +156,23 @@ export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: stri
       memberMeta = undefined;
     }
   }
+  
+  // store the name of file that contains the member meta info
+  if (memberMeta)
+    memberMeta.metaFileName = path.basename(metaPath);
+
   return memberMeta;
+}
+
+// ------------------------------ map_fromStringArray -----------------------------
+function map_fromStringArray<T>( arr:string[], inlvlu:T ) : Map<string, T>
+{
+  const map = new Map<string,T>() ;
+  for( const key of arr )
+  {
+    map.set(key, inlvlu ) ;
+  }
+  return map ;
 }
 
 // ----------------------------- memberMeta_readFolder -----------------------------
@@ -149,12 +181,13 @@ export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: stri
  * memberMeta info of that file. ( which can be undefined in case where a file
  * exists in @param dirPath but there is no memberMeta info on that file. )
  * @param dirPath directory path of `folder` to gather meta info from.
- * @returns { memberMetaArr, orphanFileArr } arrays of files in the folder.
+ * @returns object containing two arrays. memberMetaArr and orphanFileArr.
 */
 export async function memberMeta_readFolder(dirPath: string)
 {
   const memberMetaArr:iMemberMetaItem[] = [];
   const orphanFileArr: string[] = [] ;
+
   const { files } = await dir_readdir(dirPath);
   for (const fileName of files)
   {
@@ -174,7 +207,52 @@ export async function memberMeta_readFolder(dirPath: string)
       }
     }
   }
+
+  await memberMetaDir_cleanup( dirPath, memberMetaArr ) ;
+
   return { memberMetaArr, orphanFileArr } ;
+}
+
+// ----------------------------- memberMetaDir_cleanup -----------------------------
+/**
+ * cleanup the contents of .mirror member meta folder.
+ * Cleanup entails deleting all memberMeta files from the .mirror folder which do
+ * not have a corresponding srcmbr_file in the srcmbr mirrored folder.
+ * @param dirPath path of srcmbr mirrored folder.
+ * @param memberMetaArr array stores iMemberMetaItem for each srcmbr_file in the 
+ * mirrored folder.
+ */
+async function memberMetaDir_cleanup( dirPath:string, memberMetaArr:iMemberMetaItem[] )
+{
+  // read names of all files in the memberMeta directory.
+  // create a Map object, with each key in the Map set to the memberMetaFile
+  // file name. ( this is used to check for hanging memberMeta directory files. )
+  const metaDirPath = memberMeta_dirPath(dirPath);
+  const { files: metaFiles } = await dir_readdir(metaDirPath);
+  const metaFileMap = map_fromStringArray(metaFiles, false);
+
+  // for each memberMeta file found in memberMetaArr, mark that file as used in the
+  // set of all files in the member meta directory.
+  memberMetaArr.forEach((item) =>
+  {
+    const { metaFileName } = item ;
+    if ( metaFileName )
+    {
+      metaFileMap.set( metaFileName, true ) ;
+    }
+  });
+
+  // delete all of the member meta files not matched up with actual srcmbr files
+  // in memberMetaArr.
+  for( const item of metaFileMap )
+  {
+    const [ key, vlu ] = item ;
+    if (!vlu)
+    {
+      const metaFilePath = path.join(metaDirPath, key);
+      await file_unlink(metaFilePath);
+    }
+  }
 }
 
 // ------------------------------- memberMeta_write -------------------------------
@@ -219,6 +297,7 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
   let metaDirPath = '';
   let metaName = '';
 
+  // first, build srcmbr_filePath.
   if (!srcmbr_filePath && dirPath && srcmbr_fileName)
   {
     srcmbr_filePath = path.join(dirPath, srcmbr_fileName);
