@@ -20,7 +20,7 @@
 
 ## meta functions
 {toPath, errmsg } = await srcmbr_filePath_rename( srcmbr_filePath, toFileName ) ;
-memberMetaArr = await memberMeta_readFolder( dirPath ) ;
+{ memberMetaArr, orphanFilArr } = await memberMeta_readFolder( dirPath ) ;
 
 ## interfaces
 ```

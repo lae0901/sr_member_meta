@@ -13,8 +13,7 @@ export interface iOriginal_srcmbr_content
 }
 
 // ------------------------------ iMemberMetaItem ------------------------------
-// iMemberMetaInfo
-// get rid of iMemberMeta interface.  To store addn info, like original lines of
+// To store addn info, like original lines of
 // the srcmbr, store in standalone interface and write to separate file in the 
 // .mirror-meta sub folder.
 export interface iMemberMetaItem
@@ -150,21 +149,32 @@ export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: stri
  * memberMeta info of that file. ( which can be undefined in case where a file
  * exists in @param dirPath but there is no memberMeta info on that file. )
  * @param dirPath directory path of `folder` to gather meta info from.
+ * @returns { memberMetaArr, orphanFileArr } arrays of files in the folder.
 */
 export async function memberMeta_readFolder(dirPath: string)
 {
-  const memberMetaArr: { fileName:string, memberMeta?: iMemberMetaItem }[] = [];
+  const memberMetaArr:iMemberMetaItem[] = [];
+  const orphanFileArr: string[] = [] ;
   const { files } = await dir_readdir(dirPath);
   for (const fileName of files)
   {
     if ( memberMeta_isSrcmbrFile(fileName))
     {
-      const item: { fileName: string, memberMeta?: iMemberMetaItem } = {fileName} ;
-      item.memberMeta = await memberMeta_readFile(dirPath, fileName);
-      memberMetaArr.push( item );
+      const memberMeta = await memberMeta_readFile(dirPath, fileName);
+      if ( memberMeta )
+      {
+        memberMetaArr.push( memberMeta );
+      }
+      else
+      {
+        // store file name into array of files in the folder which do not have
+        // an associated memberMeta info file. Should highlight those files to the 
+        // user since they do not exist as srcmbr on ibm i.
+        orphanFileArr.push( fileName ) ;
+      }
     }
   }
-  return memberMetaArr;
+  return { memberMetaArr, orphanFileArr } ;
 }
 
 // ------------------------------- memberMeta_write -------------------------------
