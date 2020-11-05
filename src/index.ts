@@ -84,7 +84,7 @@ export function langCode_setup(srcType: string): LangCode
  * that .mirror directory. )
  * @param dirPath path of srcmbr mirror folder.
  */
-function memberMeta_dirPath(dirPath: string)
+export function memberMeta_dirPath(dirPath: string)
 {
   const metaDirPath = path.join(dirPath, '.mirror');
   return metaDirPath;
