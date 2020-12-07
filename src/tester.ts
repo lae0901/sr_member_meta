@@ -2,6 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { testResults_append, testResults_consoleLog, testResults_new } from 'sr_test_framework';
+import { langCode_setup, memberMeta_readFolder, srcType_toExt } from '.';
 
 // run main function that is declared as async. 
 async_main();
@@ -32,6 +33,24 @@ async function member_test()
     const actual = expected ;
     const desc = 'get git status';
     testResults_append(results, { method, expected, actual, desc });
+  }
+
+  // langCode_setup
+  {
+    const srcType = 'SQLRPGLE' ;
+    const method = 'langCode_setup' ;
+    const actual = langCode_setup(srcType) as string ;
+    const expected = 'rpg' ;
+    testResults_append(results, { method, expected, actual });
+  }
+
+  // srcType_toExt
+  {
+    const srcType = 'SQLRPGLE';
+    const method = 'srcType_toExt';
+    const actual = srcType_toExt(srcType);
+    const expected = '.sqlrpgle';
+    testResults_append(results, { method, expected, actual });
   }
 
   return results;

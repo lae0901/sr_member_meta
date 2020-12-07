@@ -10,9 +10,17 @@
 * iSrcmbrLine[] = await as400_srcmbrLines( lib, file, srcmbr )
 * iDspfd_mbrlist[] = await as400_srcmbrList( lib, file, srcmbr )
 
+## utility functions
+* langCode = langCode_setup( srcType )
+* ext = srcType_toExt( srcType )
+
 ## ibm i ifs functions
 * iIfsItem[] = await ibmi_ifs_getItems( dirPath, itemName, filter_itemType )
 * {buf,errmsg} = await ibmi_ifs_getFileContents( filePath )
+
+## meta functions
+{toPath, errmsg } = await srcmbr_filePath_rename( srcmbr_filePath, toFileName ) ;
+{ memberMetaArr, orphanFilArr } = await memberMeta_readFolder( dirPath ) ;
 
 ## interfaces
 ```

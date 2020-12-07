@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { dir_ensureExists, dir_readdir, file_readText, file_unlink, file_writeNew } from 'sr_core_ts';
+import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, string_head } from 'sr_core_ts';
 import { iDspfd_mbrlist } from 'sr_ibmi_common';
 
 // -------------------------------- LangCode ------------------------------------
@@ -13,8 +13,7 @@ export interface iOriginal_srcmbr_content
 }
 
 // ------------------------------ iMemberMetaItem ------------------------------
-// iMemberMetaInfo
-// get rid of iMemberMeta interface.  To store addn info, like original lines of
+// To store addn info, like original lines of
 // the srcmbr, store in standalone interface and write to separate file in the 
 // .mirror-meta sub folder.
 export interface iMemberMetaItem
@@ -42,6 +41,9 @@ export interface iMemberMetaItem
   // Use this when deciding whether to shift source code to the left by 5 
   // characters.
   compile_time_array_start: number;
+
+  // name of meta file where this member meta info is stored.
+  metaFileName?: string;
 }
 
 // ------------------------------- folderContent_new -------------------------------
@@ -100,20 +102,23 @@ export async function memberMeta_assignProperty( srcmbr_filePath: string, propNa
 
 // ---------------------------- memberMeta_ensureFolder ----------------------------
 export async function memberMeta_ensureFolder(dirPath: string,
-                          appendActivityLog: (text: string) => void)
+                          appendActivityLog?: (text: string) => void)
 {
   const metaDirPath = path.join(dirPath, '.mirror');
   const { errmsg } = await dir_ensureExists(metaDirPath);
-  if (errmsg)
+  if (errmsg && appendActivityLog)
   {
     appendActivityLog(`error ${errmsg} creating srcf mirror meta folder ${metaDirPath}`);
   }
 }
 
 // ---------------------------- memberMeta_isSrcmbrFile ----------------------------
-// check if file contains srcmbr mirrored down to PC from ibm i.
-// Not intended to be definitive test. Just looking to rule out directories or 
-// .json files.
+/** check if file name could be name of srcmbr file mirrored down from ibm i.
+ *  was created from srcmbr mirrored down to PC from ibm i.
+ * If file name is not .json file or not directory, then is considered to be
+ * a srcmbr file name.
+ * @param srcmbr_fileName name of file to check if could be srcmbr file
+*/
 export function memberMeta_isSrcmbrFile( srcmbr_fileName:string ) : boolean
 {
   const ext = path.extname(srcmbr_fileName);
@@ -144,6 +149,7 @@ export async function memberMeta_readContent(filePath?: string, dirPath?: string
 }
 
 // ------------------------------ memberMeta_readFile ------------------------------
+/** read the contents of memberMeta file of this srcmbr_fileName  */
 export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: string)
 {
   let memberMeta: iMemberMetaItem | undefined;
@@ -160,28 +166,104 @@ export async function memberMeta_readFile(dirPath: string, srcmbr_fileName: stri
       memberMeta = undefined;
     }
   }
+  
+  // store the name of file that contains the member meta info
+  if (memberMeta)
+    memberMeta.metaFileName = path.basename(metaPath);
+
   return memberMeta;
 }
 
+// ------------------------------ map_fromStringArray -----------------------------
+function map_fromStringArray<T>( arr:string[], inlvlu:T ) : Map<string, T>
+{
+  const map = new Map<string,T>() ;
+  for( const key of arr )
+  {
+    map.set(key, inlvlu ) ;
+  }
+  return map ;
+}
+
 // ----------------------------- memberMeta_readFolder -----------------------------
+/** Gather memberMeta info on each file in dirPath.
+ * returns an array contain name of each file in the @param dirPath and the 
+ * memberMeta info of that file. ( which can be undefined in case where a file
+ * exists in @param dirPath but there is no memberMeta info on that file. )
+ * @param dirPath directory path of `folder` to gather meta info from.
+ * @returns object containing two arrays. memberMetaArr and orphanFileArr.
+*/
 export async function memberMeta_readFolder(dirPath: string)
 {
-  const memberMetaArr: iMemberMetaItem[] = [];
+  const memberMetaArr:iMemberMetaItem[] = [];
+  const orphanFileArr: string[] = [] ;
+
   const { files } = await dir_readdir(dirPath);
   for (const fileName of files)
   {
     if ( memberMeta_isSrcmbrFile(fileName))
     {
       const memberMeta = await memberMeta_readFile(dirPath, fileName);
-      if (memberMeta)
+      if ( memberMeta )
       {
-        memberMetaArr.push(memberMeta);
+        memberMetaArr.push( memberMeta );
+      }
+      else
+      {
+        // store file name into array of files in the folder which do not have
+        // an associated memberMeta info file. Should highlight those files to the 
+        // user since they do not exist as srcmbr on ibm i.
+        orphanFileArr.push( fileName ) ;
       }
     }
   }
-  return memberMetaArr;
+
+  await memberMetaDir_cleanup( dirPath, memberMetaArr ) ;
+
+  return { memberMetaArr, orphanFileArr } ;
 }
 
+// ----------------------------- memberMetaDir_cleanup -----------------------------
+/**
+ * cleanup the contents of .mirror member meta folder.
+ * Cleanup entails deleting all memberMeta files from the .mirror folder which do
+ * not have a corresponding srcmbr_file in the srcmbr mirrored folder.
+ * @param dirPath path of srcmbr mirrored folder.
+ * @param memberMetaArr array stores iMemberMetaItem for each srcmbr_file in the 
+ * mirrored folder.
+ */
+async function memberMetaDir_cleanup( dirPath:string, memberMetaArr:iMemberMetaItem[] )
+{
+  // read names of all files in the memberMeta directory.
+  // create a Map object, with each key in the Map set to the memberMetaFile
+  // file name. ( this is used to check for hanging memberMeta directory files. )
+  const metaDirPath = memberMeta_dirPath(dirPath);
+  const { files: metaFiles } = await dir_readdir(metaDirPath);
+  const metaFileMap = map_fromStringArray(metaFiles, false);
+
+  // for each memberMeta file found in memberMetaArr, mark that file as used in the
+  // set of all files in the member meta directory.
+  memberMetaArr.forEach((item) =>
+  {
+    const { metaFileName } = item ;
+    if ( metaFileName )
+    {
+      metaFileMap.set( metaFileName, true ) ;
+    }
+  });
+
+  // delete all of the member meta files not matched up with actual srcmbr files
+  // in memberMetaArr.
+  for( const item of metaFileMap )
+  {
+    const [ key, vlu ] = item ;
+    if (!vlu)
+    {
+      const metaFilePath = path.join(metaDirPath, key);
+      await file_unlink(metaFilePath);
+    }
+  }
+}
 
 // ------------------------------- memberMeta_write -------------------------------
 export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
@@ -209,6 +291,7 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
       content.compile_time_array_start = data.compile_time_array_start;
     }
 
+    await memberMeta_ensureFolder(dirPath) ;
     const metaPath = memberMeta_filePath(undefined, dirPath, content.srcmbr_fileName);
     const metaText = JSON.stringify(content);
     await file_writeNew(metaPath, metaText);
@@ -224,6 +307,7 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
   let metaDirPath = '';
   let metaName = '';
 
+  // first, build srcmbr_filePath.
   if (!srcmbr_filePath && dirPath && srcmbr_fileName)
   {
     srcmbr_filePath = path.join(dirPath, srcmbr_fileName);
@@ -244,6 +328,8 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
 }
 
 // ------------------------------- memberOriginal_write -------------------------------
+// member original is file in .mirror folder that stores original text lines of the
+// srcmbr file. 
 export async function memberOriginal_write(dirPath: string, srcmbr_fileName: string,
                                             original_lines_text: string)
 {
@@ -254,6 +340,8 @@ export async function memberOriginal_write(dirPath: string, srcmbr_fileName: str
 }
 
 // ------------------------------ memberOriginal_filePath ------------------------------
+// member original is file in .mirror folder that stores original text lines of the
+// srcmbr file. 
 function memberOriginal_filePath(dirPath: string, srcmbr_fileName: string)
 {
 
@@ -273,4 +361,40 @@ function memberOriginal_filePath(dirPath: string, srcmbr_fileName: string)
   origPath = path.join(metaDirPath, origName);
 
   return origPath;
+}
+
+// ------------------------------- srcmbr_filePath_rename -------------------------------
+// rename the file that stores srcmbr in the PC mirror folder.
+// When file is renamed, the memberMeta file has to be renamed also.
+export async function srcmbr_filePath_rename( 
+        srcmbr_filePath:string, toFileName:string )
+{
+  let errmsg = '' ;
+  let toPath = '' ;
+
+  // rename the srcmbr file.
+  ({toPath, errmsg} = await file_rename(srcmbr_filePath, {baseName:toFileName}));
+
+  // rename the associated memberMeta file.
+  {
+    const metaPath = memberMeta_filePath( srcmbr_filePath ) ;
+    const { toPath:toMetaPath, errmsg: metaErrmsg } = await file_rename( metaPath, { baseName: toFileName });
+  }
+
+  return {toPath, errmsg } ;
+}
+
+// --------------------------------- srcType_toExt ---------------------------------
+export function srcType_toExt( srcType:string ) : string
+{
+  // extension of this source file.
+  let ext = '.' + srcType.toLowerCase();
+  const upper_srcType = srcType.toUpperCase() ;
+  if (string_head(upper_srcType, 3) == 'SQL' && (upper_srcType != 'SQLRPGLE'))
+    ext = '.sqli';
+  else if (upper_srcType == 'CMD')
+    ext = '.cmdi';
+  else if ( upper_srcType == 'RPG')
+    ext = '.rpgi' ;
+  return ext ;
 }
