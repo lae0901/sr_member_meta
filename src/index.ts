@@ -75,6 +75,29 @@ export function langCode_setup(srcType: string): LangCode
   return langCode;
 }
 
+// ------------------------------ memberMeta_assignProperty ------------------------------
+export async function memberMeta_assignProperty( srcmbr_filePath: string, propName:string, vlu:object)
+{
+  let memberMeta: iMemberMetaItem | undefined;
+  const content = await memberMeta_readContent(srcmbr_filePath ) ;
+  content[propName] = vlu ;
+  memberMeta_write()
+  const metaPath = memberMeta_filePath( srcmbr_filePath );
+  const { text: metaText } = await file_readText(metaPath);
+  if (metaText)
+  {
+    try
+    {
+      memberMeta = JSON.parse(metaText);
+    }
+    catch (e)
+    {
+      memberMeta = undefined;
+    }
+  }
+  return memberMeta;
+}
+
 // ---------------------------- memberMeta_ensureFolder ----------------------------
 export async function memberMeta_ensureFolder(dirPath: string,
                           appendActivityLog: (text: string) => void)
