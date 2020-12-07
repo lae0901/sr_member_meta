@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { testResults_append, testResults_consoleLog, testResults_new } from 'sr_test_framework';
-import { langCode_setup, memberMeta_assignProperty, memberMeta_metaDirPath, memberMeta_readContent, memberMeta_readFolder, srcType_toExt } from '.';
+import { ext_toLangCode, langCode_setup, memberMeta_assignProperty, memberMeta_metaDirPath, memberMeta_readContent, memberMeta_readFolder, srcType_toExt } from '.';
 
 // run main function that is declared as async. 
 async_main();
@@ -50,6 +50,16 @@ async function member_test()
     const method = 'srcType_toExt';
     const actual = srcType_toExt(srcType);
     const expected = '.sqlrpgle';
+    testResults_append(results, { method, expected, actual });
+  }
+
+  // ext_toLangCode
+  {
+    const srcmbr_filePath = 'C:\\web\\extensions\\sr-rpg-ibmi\\client\\src\\extension.sqlrpgle'
+    const ext = path.extname(srcmbr_filePath) ;
+    const method = 'ext_toLangCode';
+    const actual = ext_toLangCode(ext);
+    const expected = 'rpg';
     testResults_append(results, { method, expected, actual });
   }
 

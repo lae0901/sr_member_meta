@@ -13,6 +13,7 @@
 ## utility functions
 * langCode = langCode_setup( srcType )
 * ext = srcType_toExt( srcType )
+* langCode = ext_toLangCode( ext )
 
 ## ibm i ifs functions
 * iIfsItem[] = await ibmi_ifs_getItems( dirPath, itemName, filter_itemType )

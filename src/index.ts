@@ -3,7 +3,7 @@ import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink,
 import { iDspfd_mbrlist } from 'sr_ibmi_common';
 
 // -------------------------------- LangCode ------------------------------------
-export type LangCode = 'dds' | 'rpg' | 'other';
+export type LangCode = 'dds' | 'rpg' | 'sql' | 'other';
 
 // ---------------------------- iOriginal_srcmbr_content --------------------------
 export interface iOriginal_srcmbr_content 
@@ -78,6 +78,8 @@ export function langCode_setup(srcType: string): LangCode
   else if ((srcType == 'DSPF') || (srcType == 'PF')
     || (srcType == 'LF') || (srcType == 'PRTF'))
     langCode = 'dds';
+  else if ( srcType.indexOf('SQL') != -1 )
+    langCode = 'sql' ;
   return langCode;
 }
 
@@ -418,4 +420,22 @@ export function srcType_toExt( srcType:string ) : string
   else if ( upper_srcType == 'RPG')
     ext = '.rpgi' ;
   return ext ;
+}
+
+// -------------------------------- ext_toLangCode --------------------------------
+/**
+ * convert file extension to language code of the source code contained in the file.
+ * @param ext extension of the srcmbr file
+ */
+export function ext_toLangCode( ext:string ) : LangCode 
+{
+  ext = ext.toLowerCase( ) ;
+  if (( ext == '.sqlrpgle') || ( ext == '.rpgle') || ( ext == '.rpgi'))
+    return 'rpg' ;
+  else if ( ext == '.sqli' )
+    return 'sql' ;
+  else if ( ext == '.dspf')
+    return 'dds' ;
+  else
+    return 'other' ;
 }
