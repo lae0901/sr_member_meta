@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { testResults_append, testResults_consoleLog, testResults_new } from 'sr_test_framework';
-import { langCode_setup, memberMeta_readFolder, srcType_toExt } from '.';
+import { langCode_setup, memberMeta_assignProperty, memberMeta_metaDirPath, memberMeta_readContent, memberMeta_readFolder, srcType_toExt } from '.';
 
 // run main function that is declared as async. 
 async_main();
@@ -50,6 +50,28 @@ async function member_test()
     const method = 'srcType_toExt';
     const actual = srcType_toExt(srcType);
     const expected = '.sqlrpgle';
+    testResults_append(results, { method, expected, actual });
+  }
+
+  // memberMeta_metaDirPath
+  {
+    const method = 'memberMeta_metaDirPath';
+    const dirPath = 'C:\\s067454r\\srcf\\stevesrc'
+    const actual = memberMeta_metaDirPath(dirPath) ;
+    const expected = path.join(dirPath, '.mirror') ;
+    testResults_append(results, { method, expected, actual });
+  }
+
+  // memberMeta_assignProperty
+  {
+    const method = 'memberMeta_assignProperty';
+    const dirPath = 'C:\\s067454r\\srcf\\stevesrc'
+    const srcmbr_filePath = path.join(dirPath, 'CIN0103R.sqlrpgle');
+    const procedureNameArr = ['AddLabelModel_ErrorCheck', 'pcrrn_Setoff'];
+    await memberMeta_assignProperty(srcmbr_filePath, 'definedProcedures', procedureNameArr );
+    const content = await memberMeta_readContent(srcmbr_filePath);
+    const actual = content?.definedProcedures ;
+    const expected = procedureNameArr ;
     testResults_append(results, { method, expected, actual });
   }
 

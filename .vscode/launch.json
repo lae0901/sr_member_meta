@@ -9,10 +9,11 @@
       "type": "node",
       "request": "launch",
       "name": "run tester",
-      "program": "${workspaceFolder}\\src\\tests\\as400_tests.ts",
+      "program": "${workspaceFolder}\\src\\tester.ts",
       "outFiles": [
         "${workspaceFolder}/lib/**/*.js"
-      ]
+      ],
+      "preLaunchTask": "npm: build"
     },
     
     {

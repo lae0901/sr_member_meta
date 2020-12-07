@@ -44,6 +44,10 @@ export interface iMemberMetaItem
 
   // name of meta file where this member meta info is stored.
   metaFileName?: string;
+
+  // rpg procedures defined in the source member. Used by rpg-ibmi definition 
+  // provider. When press F12 to goto definition, 
+  definedProcedures?: string[]
 }
 
 // ------------------------------- folderContent_new -------------------------------
@@ -78,26 +82,31 @@ export function langCode_setup(srcType: string): LangCode
 }
 
 // ------------------------------ memberMeta_assignProperty ------------------------------
-export async function memberMeta_assignProperty( srcmbr_filePath: string, propName:string, vlu:object)
+/**
+ * update the specified property of memberMeta file of the srcmbr_file. Each srcmbr
+ * file has a memberMeta file stored in the .mirror folder of the folder that 
+ * contains the srcmbr file. 
+ * @param srcmbr_filePath path of srcmbr file whose memberMeta info is to be updated.
+ * @param propName name of property in memberMeta to assign to.
+ * @param vlu Value to assign to the property.
+ */
+export async function memberMeta_assignProperty( srcmbr_filePath: string, 
+                  propName:'definedProcedures' | 'abc', vlu:object | string[])
 {
-  let memberMeta: iMemberMetaItem | undefined;
   const content = await memberMeta_readContent(srcmbr_filePath ) ;
-  content[propName] = vlu ;
-  memberMeta_write()
-  const metaPath = memberMeta_filePath( srcmbr_filePath );
-  const { text: metaText } = await file_readText(metaPath);
-  if (metaText)
+  if ( content )
   {
-    try
+    if ( propName == 'definedProcedures' )
     {
-      memberMeta = JSON.parse(metaText);
+      content.definedProcedures = vlu as string[] ;
     }
-    catch (e)
+
     {
-      memberMeta = undefined;
+      const dirPath = path.dirname(srcmbr_filePath) ;
+      const fileName = path.basename(srcmbr_filePath) ;
+      await memberMeta_write( dirPath, fileName, {content} ) ;
     }
   }
-  return memberMeta;
 }
 
 // ---------------------------- memberMeta_ensureFolder ----------------------------
@@ -126,6 +135,18 @@ export function memberMeta_isSrcmbrFile( srcmbr_fileName:string ) : boolean
     return false ;
   else
     return true ;
+}
+
+// ---------------------------- memberMeta_metaDirPath ----------------------------
+/**
+ * return path of folder where memberMeta files for the srcmbr files in the input
+ * dirPath are stored
+ * @param dirPath name of srcmbr files directory path.
+ */
+export function memberMeta_metaDirPath(dirPath: string)
+{
+  const metaDirPath = path.join(dirPath, '.mirror');
+  return metaDirPath;
 }
 
 // ------------------------------- memberMeta_unlink -------------------------------
@@ -237,7 +258,7 @@ async function memberMetaDir_cleanup( dirPath:string, memberMetaArr:iMemberMetaI
   // read names of all files in the memberMeta directory.
   // create a Map object, with each key in the Map set to the memberMetaFile
   // file name. ( this is used to check for hanging memberMeta directory files. )
-  const metaDirPath = memberMeta_dirPath(dirPath);
+  const metaDirPath = memberMeta_metaDirPath(dirPath);
   const { files: metaFiles } = await dir_readdir(metaDirPath);
   const metaFileMap = map_fromStringArray(metaFiles, false);
 
@@ -318,7 +339,7 @@ function memberMeta_filePath(srcmbr_filePath?: string, dirPath?: string, srcmbr_
     const parts = path.parse(srcmbr_filePath);
     dirPath = parts.dir;
     const extPart = parts.ext ? '-' + parts.ext.substr(1) : '';
-    metaDirPath = path.join(dirPath, '.mirror');
+    metaDirPath = memberMeta_metaDirPath(dirPath) ;
     metaName = parts.name + extPart + '.json';
   }
 

@@ -19,8 +19,10 @@
 * {buf,errmsg} = await ibmi_ifs_getFileContents( filePath )
 
 ## meta functions
-{toPath, errmsg } = await srcmbr_filePath_rename( srcmbr_filePath, toFileName ) ;
-{ memberMetaArr, orphanFilArr } = await memberMeta_readFolder( dirPath ) ;
+* {toPath, errmsg } = await srcmbr_filePath_rename( srcmbr_filePath, toFileName ) ;
+* { memberMetaArr, orphanFilArr } = await memberMeta_readFolder( dirPath ) ;
+* await memberMeta_assignProperty( srcmbr_filePath, procName, vlu );
+* memberMeta_metaDirPath( dirPath ) ;
 
 ## interfaces
 ```
