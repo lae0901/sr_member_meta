@@ -98,7 +98,7 @@ export function langCode_setup(srcType: string): LangCode
  * @param vlu Value to assign to the property.
  */
 export async function memberMeta_assignProperty( srcmbr_filePath: string, 
-                  propName:'definedProcedures' | 'abc', vlu:object | string[])
+                  propName:'definedProcedures' | 'changeTimes', vlu:object | string[])
 {
   const content = await memberMeta_readContent(srcmbr_filePath ) ;
   if ( content )
@@ -106,6 +106,13 @@ export async function memberMeta_assignProperty( srcmbr_filePath: string,
     if ( propName == 'definedProcedures' )
     {
       content.definedProcedures = vlu as string[] ;
+    }
+    else if ( propName == 'changeTimes')
+    {
+      const {mtime, chgDate, chgTime } = vlu as {mtime:number, chgDate:string, chgTime:string};
+      content.mtime = mtime ;
+      content.chgDate = chgDate ;
+      content.chgTime = chgTime ;
     }
 
     {
