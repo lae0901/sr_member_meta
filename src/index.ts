@@ -2,6 +2,11 @@ import * as path from 'path';
 import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, string_head } from 'sr_core_ts';
 import { iDspfd_mbrlist } from 'sr_ibmi_common';
 
+import { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
+            memberMeta_gatherDefinedProcedures } from './gather-procedures' ;
+export { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
+          memberMeta_gatherDefinedProcedures };
+
 // -------------------------------- LangCode ------------------------------------
 export type LangCode = 'dds' | 'rpg' | 'sql' | 'other';
 
@@ -121,6 +126,35 @@ export async function memberMeta_ensureFolder(dirPath: string,
   {
     appendActivityLog(`error ${errmsg} creating srcf mirror meta folder ${metaDirPath}`);
   }
+}
+
+// ------------------------ memberMeta_findDefinedProcedure ------------------------
+/**
+ * open member meta file of a srcmbr file. Search for defined procedure. 
+ * @param srcmbr_filePath path of srcmbr file in which to search for the defined 
+ * procedure.
+ * @param procName procedure to search for
+ */
+export async function memberMeta_findDefinedProcedure(srcmbr_filePath: string, procName: string)
+{
+  let definedProcedures: string[] | undefined;
+  let foundProc:string | undefined ;
+
+  // read the list of procedures defined in this srcmbr
+  const meta = await memberMeta_readContent(srcmbr_filePath);
+  if (meta)
+  {
+    definedProcedures = meta.definedProcedures;
+    const lowerProcName = procName.toLowerCase();
+    if (definedProcedures)
+    {
+      foundProc = definedProcedures.find((item) =>
+      {
+        return lowerProcName == item.toLowerCase();
+      });
+    }
+  }
+  return { meta, definedProcedures, foundProc };
 }
 
 // ---------------------------- memberMeta_isSrcmbrFile ----------------------------
