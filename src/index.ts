@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, string_head } from 'sr_core_ts';
+import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, object_apply, string_head } from 'sr_core_ts';
 import { iDspfd_mbrlist } from 'sr_ibmi_common';
 
 import { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
@@ -339,10 +339,16 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
   {
     content = data.content;
   }
-  else if (data.dspfd)
+
+  if (data.dspfd)
   {
-    content = folderContent_new(data.dspfd, dirPath, srcmbr_fileName);
+    const dspfd_content = folderContent_new(data.dspfd, dirPath, srcmbr_fileName);
+    if ( !content )
+      content = dspfd_content ;
+    else
+      object_apply( content, dspfd_content ) ;
   }
+
   if (content)
   {
     content.langCode = langCode_setup( content.srcType );
