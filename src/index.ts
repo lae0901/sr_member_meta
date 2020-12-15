@@ -8,7 +8,7 @@ export { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure,
           memberMeta_gatherDefinedProcedures };
 
 // -------------------------------- LangCode ------------------------------------
-export type LangCode = 'dds' | 'rpg' | 'sql' | 'other';
+export type LangCode = 'dds' | 'rpg' | 'sql' | 'cl' | 'other';
 
 // ---------------------------- iOriginal_srcmbr_content --------------------------
 export interface iOriginal_srcmbr_content 
@@ -83,6 +83,8 @@ export function langCode_setup(srcType: string): LangCode
   else if ((srcType == 'DSPF') || (srcType == 'PF')
     || (srcType == 'LF') || (srcType == 'PRTF'))
     langCode = 'dds';
+  else if ((srcType == 'CLLE') || (srcType == 'CLP'))
+    langCode = 'cl';
   else if ( srcType.indexOf('SQL') != -1 )
     langCode = 'sql' ;
   return langCode;
@@ -466,6 +468,10 @@ export function srcType_toExt( srcType:string ) : string
     ext = '.cmdi';
   else if ( upper_srcType == 'RPG')
     ext = '.rpgi' ;
+  else if (upper_srcType == 'CLLE')
+    ext = '.clle';
+  else if ((upper_srcType == 'DSPF') || ( upper_srcType == 'PF') || ( upper_srcType == 'LF'))
+    ext = '.ddsi';
   return ext ;
 }
 
