@@ -489,6 +489,8 @@ export function ext_toLangCode( ext:string ) : LangCode
     return 'sql' ;
   else if ( ext == '.dspf')
     return 'dds' ;
+  else if (ext == '.clle')
+    return 'cl';
   else
     return 'other' ;
 }

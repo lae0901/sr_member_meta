@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { testResults_append, testResults_consoleLog, testResults_new } from 'sr_test_framework';
-import { ext_toLangCode, langCode_setup, memberMeta_assignProperty, memberMeta_metaDirPath, memberMeta_readContent, memberMeta_readFolder, srcType_toExt } from '.';
+import { ext_toLangCode, LangCode, langCode_setup, memberMeta_assignProperty, memberMeta_metaDirPath, memberMeta_readContent, memberMeta_readFolder, srcType_toExt } from '.';
 
 // run main function that is declared as async. 
 async_main();
@@ -61,6 +61,17 @@ async function member_test()
     const actual = ext_toLangCode(ext);
     const expected = 'rpg';
     testResults_append(results, { method, expected, actual });
+  }
+
+  // ext_toLangCode cl
+  {
+    const srcmbr_filePath = 'C:\\web\\extensions\\sr-rpg-ibmi\\client\\src\\extension.clle'
+    const ext = path.extname(srcmbr_filePath);
+    const method = 'ext_toLangCode';
+    const aspect = 'clle program' ;
+    const actual = ext_toLangCode(ext);
+    const expected = 'cl' as LangCode ;
+    testResults_append(results, { method, aspect, expected, actual });
   }
 
   // memberMeta_metaDirPath
