@@ -6,6 +6,7 @@ import { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure,
             memberMeta_gatherDefinedProcedures } from './gather-procedures' ;
 export { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
           memberMeta_gatherDefinedProcedures };
+export * from './gather-defined-symbols' ;
 
 // -------------------------------- LangCode ------------------------------------
 export type LangCode = 'dds' | 'rpg' | 'sql' | 'cl' | 'other';
@@ -217,7 +218,14 @@ export async function memberMeta_readContent(filePath?: string, dirPath?: string
   const { text: metaText } = await file_readText(metaPath);
   if (metaText)
   {
-    content = JSON.parse(metaText);
+    try
+    {
+      content = JSON.parse(metaText);
+    }
+    catch( e )
+    {
+      throw(`memberMeta_readContent error. meta file:${metaPath} bad json. ${e.message}`) ;
+    }
   }
   return content;
 }
@@ -362,6 +370,7 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
   if (content)
   {
     content.langCode = langCode_setup( content.srcType );
+    content.srcmbr_fileName = srcmbr_fileName ;
 
     // store line num where compile time arrays start in rpg srcmbr.
     // Use this when deciding whether to shift source code to the left by 5 
@@ -372,7 +381,7 @@ export async function memberMeta_write(dirPath: string, srcmbr_fileName: string,
     }
 
     await memberMeta_ensureFolder(dirPath) ;
-    const metaPath = memberMeta_filePath(undefined, dirPath, content.srcmbr_fileName);
+    const metaPath = memberMeta_filePath(undefined, dirPath, srcmbr_fileName);
     const metaText = JSON.stringify(content);
     await file_writeNew(metaPath, metaText);
   }
