@@ -1,11 +1,6 @@
 import * as path from 'path';
 import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, object_apply, string_head } from 'sr_core_ts';
-import { iDefinedSymbolName, iDspfd_mbrlist } from 'sr_ibmi_common';
-
-import { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
-            memberMeta_gatherDefinedProcedures } from './gather-procedures' ;
-export { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
-          memberMeta_gatherDefinedProcedures };
+import { iDefinedSymbolName, iDspfd_mbrlist, RPG_symbolType } from 'sr_ibmi_common';
 export * from './gather-defined-symbols' ;
 
 // -------------------------------- LangCode ------------------------------------
@@ -146,33 +141,35 @@ export async function memberMeta_ensureFolder(dirPath: string,
   }
 }
 
-// ------------------------ memberMeta_findDefinedProcedure ------------------------
+// ------------------------- memberMeta_findDefinedSymbol -------------------------
 /**
- * open member meta file of a srcmbr file. Search for defined procedure. 
- * @param srcmbr_filePath path of srcmbr file in which to search for the defined 
- * procedure.
- * @param procName procedure to search for
+ * open member meta file of a srcmbr file. Search for defined symbol.
+ * @param srcmbr_filePath path of srcmbr file in which to search for the defined
+ * symbol.
+ * @param symbolType 
+ * @param symbolName 
  */
-export async function memberMeta_findDefinedProcedure(srcmbr_filePath: string, procName: string)
+export async function memberMeta_findDefinedSymbol(
+  srcmbr_filePath: string, symbolType: RPG_symbolType, symbolName: string)
 {
-  let definedProcedures: string[] | undefined;
-  let foundProc:string | undefined ;
+  let definedSymbols: iDefinedSymbolName[] | undefined;
+  let foundSymbol: iDefinedSymbolName | undefined;
 
   // read the list of procedures defined in this srcmbr
   const meta = await memberMeta_readContent(srcmbr_filePath);
   if (meta)
   {
-    definedProcedures = meta.definedProcedures;
-    const lowerProcName = procName.toLowerCase();
-    if (definedProcedures)
+    definedSymbols = meta.definedSymbols;
+    const lowerSymbolName = symbolName.toLowerCase();
+    if (definedSymbols)
     {
-      foundProc = definedProcedures.find((item) =>
+      foundSymbol = definedSymbols.find((item) =>
       {
-        return lowerProcName == item.toLowerCase();
+        return (symbolType == item.symbolType && lowerSymbolName == item.symbolName.toLowerCase());
       });
     }
   }
-  return { meta, definedProcedures, foundProc };
+  return { meta, definedSymbols, foundSymbol };
 }
 
 // ---------------------------- memberMeta_isSrcmbrFile ----------------------------
