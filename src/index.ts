@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { dir_ensureExists, dir_readdir, file_readText, file_rename, file_unlink, file_writeNew, object_apply, string_head } from 'sr_core_ts';
-import { iDspfd_mbrlist } from 'sr_ibmi_common';
+import { iDefinedSymbolName, iDspfd_mbrlist } from 'sr_ibmi_common';
 
 import { iGatherDefinedProcedureItem, gatherDefinedProcedure_findProcedure, 
             memberMeta_gatherDefinedProcedures } from './gather-procedures' ;
@@ -53,6 +53,9 @@ export interface iMemberMetaItem
   // rpg procedures defined in the source member. Used by rpg-ibmi definition 
   // provider. When press F12 to goto definition, 
   definedProcedures?: string[]
+
+  // named symbols defined in the source member. procedures, data structs.
+  definedSymbols?: iDefinedSymbolName[]  ;
 }
 
 // ------------------------------- folderContent_new -------------------------------
@@ -100,7 +103,8 @@ export function langCode_setup(srcType: string): LangCode
  * @param vlu Value to assign to the property.
  */
 export async function memberMeta_assignProperty( srcmbr_filePath: string, 
-                  propName:'definedProcedures' | 'changeTimes', vlu:object | string[])
+                  propName:'definedProcedures' | 'definedSymbols' | 'changeTimes',
+                  vlu:object | string[] | iDefinedSymbolName[]    )
 {
   const content = await memberMeta_readContent(srcmbr_filePath ) ;
   if ( content )
@@ -108,6 +112,10 @@ export async function memberMeta_assignProperty( srcmbr_filePath: string,
     if ( propName == 'definedProcedures' )
     {
       content.definedProcedures = vlu as string[] ;
+    }
+    else if ( propName == 'definedSymbols')
+    {
+      content.definedSymbols = vlu as iDefinedSymbolName[];
     }
     else if ( propName == 'changeTimes')
     {
